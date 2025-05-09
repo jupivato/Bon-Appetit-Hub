@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",         // Ou "ESNext", "es6", etc.
+    "module": "commonjs",        // Importante para Node.js
+    "outDir": "./dist",          // Pasta de saída para os arquivos .js
+    "rootDir": "./src",          // Pasta raiz dos seus arquivos .ts
+    "strict": true,              // Habilita várias checagens estritas de tipo
+    "esModuleInterop": true,     // Permite melhor interoperabilidade com módulos CommonJS
+    "skipLibCheck": true,        // Pula a verificação de tipos de arquivos de declaração de bibliotecas
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,   // Permite importar arquivos .json
+    "moduleResolution": "node"   // Como o compilador busca os módulos
+  },
+  "include": [
+    "src/**/*"                   // Inclui todos os arquivos .ts dentro da pasta src
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"               // Exclui arquivos de teste se você tiver um padrão diferente
+  ]
+}

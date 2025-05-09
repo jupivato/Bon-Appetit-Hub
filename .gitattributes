@@ -1,0 +1,23 @@
+# Set default behavior for all files to "auto"
+* text=auto
+
+# Explicitly declare text files you want to always normalize and convert to LF in the repo
+*.json text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.md text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.txt text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# Declare files that will always have CRLF line endings on checkout
+# *.sln text eol=crlf
+# *.csproj text eol=crlf
+
+# Declare files that should not be touched (binary files)
+# *.png binary
+# *.jpg binary
