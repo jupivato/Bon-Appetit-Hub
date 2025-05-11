@@ -9,7 +9,8 @@
     "skipLibCheck": true,        // Pula a verificação de tipos de arquivos de declaração de bibliotecas
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,   // Permite importar arquivos .json
-    "moduleResolution": "node"   // Como o compilador busca os módulos
+    "moduleResolution": "node",   // Como o compilador busca os módulos
+     "types": ["node"] // Tenta com uma lista vazia
   },
   "include": [
     "src/**/*"                   // Inclui todos os arquivos .ts dentro da pasta src
