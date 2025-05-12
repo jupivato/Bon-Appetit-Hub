@@ -1,4 +1,4 @@
-import { PrismaClient } from '../generated/prisma/client'; // Ajuste fino no caminho
+import { PrismaClient } from '../generated/prisma/client'; // ajuste fino no caminho
 
 // import { PrismaClient } from '../generated/prisma';
 
@@ -22,12 +22,12 @@ async function main() {
   console.log('Dados existentes limpos.');
 
 
-  // --- Criar Usuários ---
+  // --- criar usuários ---
   const usuarioAdmin = await prisma.usuario.create({
     data: {
       nome: "Chef Admin",
       email: "admin@bonappetithub.com",
-      senha: "admin_hashed_password", // Lembre-se de usar hash de senhas em produção!
+      senha: "admin_hashed_password",
       role: "ADMINISTRADOR",
     },
   });
@@ -37,13 +37,13 @@ async function main() {
     data: {
       nome: "Julia Pivato Cozinheira",
       email: "julia.pivato@bonappetithub.com",
-      senha: "julia_hashed_password", // Lembre-se de usar hash!
+      senha: "julia_hashed_password",
       role: "COMUM",
     },
   });
   console.log(`Criado usuário comum: ${usuarioComumJulia.nome} (ID: ${usuarioComumJulia.id})`);
 
-  // --- Criar Lista de Compras para Julia ---
+  // --- criar lista de compras para julia ---
   const listaComprasJulia = await prisma.listaCompras.create({
     data: {
       usuarioId: usuarioComumJulia.id,
@@ -51,7 +51,7 @@ async function main() {
   });
   console.log(`Criada lista de compras para ${usuarioComumJulia.nome} (ID: ${listaComprasJulia.id})`);
 
-  // --- Criar Categorias ---
+  // --- criar categorias ---
   const categoriaSobremesa = await prisma.categoria.create({
     data: { nome: "Sobremesa" },
   });
@@ -63,14 +63,13 @@ async function main() {
   });
   console.log(`Criada categoria: ${categoriaSobremesa.nome}, ${categoriaPratoPrincipal.nome}, ${categoriaSalada.nome}`);
 
-  // --- Criar Etiquetas ---
-  const etiquetaChocolate = await prisma.etiqueta.create({ data: { nome: "Chocolate" } });
+  // --- criar etiquetas ---
   const etiquetaFacil = await prisma.etiqueta.create({ data: { nome: "Fácil de Fazer" } });
   const etiquetaVegano = await prisma.etiqueta.create({ data: { nome: "Vegano" } });
   const etiquetaRapido = await prisma.etiqueta.create({ data: { nome: "Rápido" } });
-  console.log(`Criadas etiquetas: ${etiquetaChocolate.nome}, ${etiquetaFacil.nome}, ${etiquetaVegano.nome}, ${etiquetaRapido.nome}`);
+  console.log(`Criadas etiquetas: ${etiquetaFacil.nome}, ${etiquetaVegano.nome}, ${etiquetaRapido.nome}`);
 
-  // --- Criar Ingredientes ---
+  // --- criar ingredientes ---
   const ingChocolatePo = await prisma.ingrediente.create({ data: { nome: "Chocolate em Pó 70%", categoriaIngrediente: "Confeitaria" }});
   const ingFarinhaTrigo = await prisma.ingrediente.create({ data: { nome: "Farinha de Trigo", categoriaIngrediente: "Grãos e Farináceos" }});
   const ingOvo = await prisma.ingrediente.create({ data: { nome: "Ovo de Galinha", categoriaIngrediente: "Proteína Animal" }});
@@ -81,7 +80,7 @@ async function main() {
 
   console.log(`Criados ingredientes: ${ingChocolatePo.nome}, ${ingFarinhaTrigo.nome}, etc.`);
 
-  // --- Adicionar Itens na Lista de Compras de Julia ---
+  // --- adicionar itens na lista de compras de julia ---
   await prisma.itemListaCompras.create({
     data: {
       quantidade: 200,
@@ -102,7 +101,7 @@ async function main() {
   });
   console.log(`Adicionados itens à lista de compras de ${usuarioComumJulia.nome}`);
 
-  // --- Criar Receita: Bolo de Chocolate ---
+  // --- criar receita: bolo de chocolate ---
   const receitaBoloChocolate = await prisma.receita.create({
     data: {
       titulo: "Bolo de Chocolate Fofinho da Vovó",
@@ -114,12 +113,11 @@ async function main() {
       categoriaId: categoriaSobremesa.id,
       imagemUrl: "https://exemplo.com/imagem_bolo_chocolate.jpg",
       etiquetas: { // conectando a etiquetas existentes através da tabela de junção
-        create: [
-          { etiquetaId: etiquetaChocolate.id }, 
+        create: [ 
           { etiquetaId: etiquetaFacil.id },
         ],
       },
-      ingredientes: { // Criando os itens da receita
+      ingredientes: { // criando os itens da receita
         create: [
           { ingredienteId: ingFarinhaTrigo.id, quantidade: 2, unidade: "xícaras" },
           { ingredienteId: ingOvo.id, quantidade: 3, unidade: "unidades" },
@@ -130,19 +128,19 @@ async function main() {
       },
     },
   });
-  console.log(`Criada receita: "${receitaBoloChocolate.titulo}" por ${usuarioComumJulia.nome}`);
+  console.log(`receita criada: "${receitaBoloChocolate.titulo}" por ${usuarioComumJulia.nome}`);
 
-  // --- Criar Comentário para o Bolo de Chocolate ---
+  // --- criar comentário para o bolo de chocolate ---
   await prisma.comentario.create({
     data: {
       texto: "Que receita maravilhosa! Fiz no final de semana e toda a família amou. Super fofinho!",
-      autorId: usuarioComumJulia.id, // Julia comentando
+      autorId: usuarioComumJulia.id, // julia comentando
       receitaId: receitaBoloChocolate.id,
     },
   });
   console.log(`Criado comentário para a receita "${receitaBoloChocolate.titulo}"`);
 
-  // --- Julia Favoritando o Bolo de Chocolate ---
+  // --- julia favoritando o bolo de chocolate ---
   await prisma.receitaFavorita.create({
     data: {
       usuarioId: usuarioComumJulia.id,
@@ -151,7 +149,7 @@ async function main() {
   });
   console.log(`${usuarioComumJulia.nome} favoritou a receita "${receitaBoloChocolate.titulo}"`);
 
-  // --- Criar Receita: Salada Simples (exemplo adicional) ---
+  // --- criar receita: salada simples (exemplo adicional) ---
   const receitaSalada = await prisma.receita.create({
     data: {
       titulo: "Salada Refrescante de Verão",
@@ -169,7 +167,7 @@ async function main() {
       },
       ingredientes: {
         create: [
-          { ingredienteId: ingAlface.id, quantidade: 1, unidade: "pé" },
+          { ingredienteId: ingAlface.id, quantidade: 1, unidade: "cabeça" },
           { ingredienteId: ingTomate.id, quantidade: 2, unidade: "unidades" },
         ],
       },
