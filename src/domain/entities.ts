@@ -69,11 +69,11 @@ export class Ingrediente {
     public id: number,
     public nome: string,
     public imagemUrl?: string,
-    public categoriaIngrediente?: string // categoria específica do ingrediente, ex: "Laticínio", "Fruta"
+    public categoriaIngrediente?: string // categoria específica do ingrediente, ex: "laticínio", "fruta"
   ) {}
 }
 
-export class Categoria { // categoria da Receita, ex: "Sobremesa", "Prato Principal"
+export class Categoria { // categoria da receita, ex: "sobremesa", "prato principal"
   constructor(
     public id: number,
     public nome: string,
@@ -85,7 +85,7 @@ export class Categoria { // categoria da Receita, ex: "Sobremesa", "Prato Princi
   }
 }
 
-export class Etiqueta { // tags como "Vegano", "Sem Glúten"
+export class Etiqueta { // tags como "vegano", "sem glúten"
   constructor(
     public id: number,
     public nome: string,
@@ -102,7 +102,7 @@ export class Comentario {
   public texto: string;
   public data: Date;
   public autor: Comum; // o usuário que fez o comentário
-  public receitaId: number; // ID da receita comentada
+  public receitaId: number; // id da receita comentada
 
   constructor(id: number, texto: string, autor: Comum, receitaId: number) {
     this.id = id;
@@ -121,7 +121,7 @@ export class Receita {
   public dificuldade: 'Fácil' | 'Médio' | 'Difícil';
   public rendimento: number; // numero de porções
   public autor: Comum;
-  public ingredientes: ItemListaIngredientes[]; // Ingredientes específicos desta receita
+  public ingredientes: ItemListaIngredientes[]; // ingredientes específicos desta receita
   public comentarios: Comentario[];
   public etiquetas: Etiqueta[];
   public categoria?: Categoria; // uma receita pertence a uma categoria
@@ -173,19 +173,16 @@ export class Receita {
   }
 }
 
-export class ItemListaIngredientes { // representa um ingrediente DENTRO de uma receita
+export class ItemListaIngredientes { // representa um ingrediente dentro de uma receita
   constructor(
     public ingrediente: Ingrediente,
     public quantidade: number,
-    public unidade: string // Ex: "g", "ml", "xícara", "unidade"
+    public unidade: string // ex: "g", "ml", "xícara", "unidade"
   ) {}
 }
 
 export class ItemListaCompra {
   constructor(
-    public ingrediente: Ingrediente,
-    public quantidade: number,
-    public unidade: string,
-    public comprado: boolean = false
+    public ingrediente: Ingrediente
   ) {}
 }

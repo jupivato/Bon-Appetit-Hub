@@ -8,7 +8,7 @@
     "dev": "ts-node-dev --respawn --transpile-only --ignore-watch node_modules src/server.ts",
     "start": "node dist/server.js"
   },
-    "prisma": {
+  "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
   "keywords": [],
@@ -16,9 +16,11 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/cors": "^2.8.18",
     "@types/d3": "^7.4.3",
     "@types/express": "^5.0.1",
     "@types/geojson": "^7946.0.16",
+    "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.15.17",
     "@types/trusted-types": "^2.0.7",
     "prisma": "^6.7.0",
@@ -29,6 +31,12 @@
   },
   "dependencies": {
     "@prisma/client": "^6.7.0",
-    "express": "^5.1.0"
+    "@types/argon2": "^0.14.1",
+    "argon2": "^0.43.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.24.4"
   }
 }

@@ -1,6 +1,4 @@
-// src/test-domain.ts
 import {
-  // Removi Usuario da importação direta pois usaremos Administrador e Comum
   Administrador,
   Comum,
   Ingrediente,
@@ -10,7 +8,7 @@ import {
   Receita,
   ItemListaIngredientes,
   ItemListaCompra
-} from './entities'; // Ajustado o caminho para o módulo entities
+} from './entities'; // ajustado o caminho para o módulo entities
 
 console.log("--- Testando Classes de Domínio BonAppetitHub ---");
 
@@ -20,7 +18,6 @@ const commonUser1 = new Comum(2, "Julia Cozinheira", "julia@email.com", "senha12
 const commonUser2 = new Comum(3, "Marcos Gourmet", "marcos@email.com", "senha456");
 
 console.log("\n--- Usuários Criados ---");
-// Linha 13 (aproximadamente, após os console.logs)
 console.log(adminUser.obterPerfil());
 console.log(commonUser1.obterPerfil());
 adminUser.excluirUsuario(3);
@@ -51,9 +48,9 @@ const boloDeChocolate = new Receita(
   "1 hora",
   "Fácil",
   8,
-  commonUser1, // Autor da receita (deve ser um objeto Comum)
-  categoriaSobremesa, // Categoria da receita (opcional no construtor, mas passando aqui)
-  "url_da_imagem_do_bolo.jpg" // imagemUrl opcional
+  commonUser1, // autor da receita (deve ser um objeto comum)
+  categoriaSobremesa, // categoria da receita (opcional no construtor, mas passando aqui)
+  "url_da_imagem_do_bolo.jpg" // imagemurl opcional
 );
 
 console.log("\n--- Receita Criada ---");
@@ -71,21 +68,18 @@ boloDeChocolate.ingredientes.forEach(item => {
 });
 
 // Adicionando Etiquetas à Receita
-// Linha 67
 boloDeChocolate.adicionarEtiqueta(etiquetaChocolate);
 boloDeChocolate.adicionarEtiqueta(etiquetaFacil);
 
 console.log("\n--- Etiquetas da Receita ---");
-// Linha 76
 console.log(`Receita "${boloDeChocolate.titulo}" pertence à categoria "${boloDeChocolate.categoria?.nome}" e tem as etiquetas: ${boloDeChocolate.etiquetas.map(e => e.nome).join(', ')}`);
 
 // Usuário Comum Interagindo
-commonUser1.cadastrarReceita(boloDeChocolate); // Método de Comum
-commonUser1.favoritarReceita(boloDeChocolate); // Método de Comum
+commonUser1.cadastrarReceita(boloDeChocolate); // método de comum
+commonUser1.favoritarReceita(boloDeChocolate); // método de comum
 
 const comentario1 = new Comentario(501, "Amei essa receita! Ficou muito bom!", commonUser2, boloDeChocolate.id);
-// Linha 87
-commonUser2.comentarReceita(boloDeChocolate, comentario1); // Método de Comum
+commonUser2.comentarReceita(boloDeChocolate, comentario1); // método de comum
 
 console.log("\n--- Comentários na Receita ---");
 boloDeChocolate.comentarios.forEach(com => {
@@ -93,13 +87,12 @@ boloDeChocolate.comentarios.forEach(com => {
 });
 
 // Lista de Compras
-const itemCompraChocolate = new ItemListaCompra(chocolate, 2, "pacotes");
-// Linha 94
+const itemCompraChocolate = new ItemListaCompra(chocolate);
 commonUser1.adicionarItemListaCompras(itemCompraChocolate);
 
 console.log("\n--- Lista de Compras de Julia ---");
 commonUser1.listaDeCompras.forEach(item => {
-  console.log(`- ${item.ingrediente.nome}: ${item.quantidade} ${item.unidade} (Comprado: ${item.comprado})`);
+  console.log(`- ${item.ingrediente.nome}`);
 });
 
 // Testando definir categoria após criação (se não passada no construtor)
@@ -111,9 +104,9 @@ const tortaDeLimao = new Receita(
   "Médio",
   10,
   commonUser2
-  // Não passando categoria no construtor aqui
+  // não passando categoria no construtor aqui
 );
-tortaDeLimao.definirCategoria(categoriaSobremesa); // Usando o método para definir
+tortaDeLimao.definirCategoria(categoriaSobremesa); // usando o método para definir
 console.log(`\nReceita "${tortaDeLimao.titulo}" agora pertence à categoria "${tortaDeLimao.categoria?.nome}"`);
 console.log(`Categoria "${categoriaSobremesa.nome}" agora tem as receitas: ${categoriaSobremesa.receitas.map(r => r.titulo).join(', ')}`);
 
