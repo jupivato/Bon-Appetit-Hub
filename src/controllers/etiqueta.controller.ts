@@ -34,7 +34,23 @@ export const createEtiquetaController = async (req: Request, res: Response) => {
 acessível publicamente. */
 export const listarEtiquetasController = async (req: Request, res: Response) => {
   try {
+    const { nome } = req.query;
+    
+    const where: any = {};
+    
+    // Filtro opcional pelo nome da etiqueta
+    if (typeof nome === 'string' && nome.trim() !== '') {
+      where.nome = {
+        contains: nome,
+        mode: 'insensitive' // Case insensitive
+      };
+    }
+    
     const etiquetas = await prisma.etiqueta.findMany({
+      where,
+      include: {
+        _count: { select: { receitas: true } }
+      },
       orderBy: {
         nome: 'asc',
       },

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import * as receitaRepository from '../repositories/receita.repository';
 import { AuthenticatedRequest } from '../middlewares/auth.middleware'; // para aceder a req.usuario
-import { Role, DificuldadeReceita } from '../../generated/prisma/client';
+import { Role, DificuldadeReceita, Prisma } from '../../generated/prisma/client';
 import { prisma } from '../server';
 
 /* controller para criar uma nova receita.
@@ -69,10 +69,12 @@ permite filtros opcionais. */
 export const listarReceitasController = async (req: Request, res: Response) => {
   try {
     const {
-      categoriaId: categoriaIdQuery, // Renomeado para evitar conflito de nome
-      etiquetaId: etiquetaIdQuery,   // Renomeado para evitar conflito de nome
-      titulo: tituloQuery,           // Renomeado para evitar conflito de nome
-      ingredientes: ingredientesQueryParam, // Mantido para clareza da origem
+      categoriaId: categoriaIdQuery,
+      etiquetaId: etiquetaIdQuery,
+      titulo: tituloQuery,
+      ingredientes: ingredientesQueryParam,
+      autorId: autorIdQuery,
+      dificuldade: dificuldadeQuery,
     } = req.query;
 
     // Construir o objeto de filtro para condições diretas no 'where'
@@ -92,6 +94,18 @@ export const listarReceitasController = async (req: Request, res: Response) => {
       }
     }
 
+    if (typeof autorIdQuery === 'string') {
+      const parsedAutorId = parseInt(autorIdQuery, 10);
+      if (!isNaN(parsedAutorId) && parsedAutorId > 0) {
+        baseWhere.autorId = parsedAutorId;
+      }
+    }
+
+    if (typeof dificuldadeQuery === 'string' && 
+        Object.values(DificuldadeReceita).includes(dificuldadeQuery as DificuldadeReceita)) {
+      baseWhere.dificuldade = dificuldadeQuery;
+    }
+
     // Construir array para condições AND mais complexas (etiquetas, ingredientes)
     const andConditions: any[] = [];
 
@@ -108,56 +122,35 @@ export const listarReceitasController = async (req: Request, res: Response) => {
       }
     }
 
-    // Nova lógica para filtrar por ingredientes ("APENAS os ingredientes listados")
+    // Lógica para filtrar por ingredientes
     if (typeof ingredientesQueryParam === 'string') {
       const parsedIngredientesIds = ingredientesQueryParam
         .split(',')
         .map(idStr => parseInt(idStr.trim(), 10))
-        .filter(id => !isNaN(id) && id > 0); // Filtra IDs válidos (números > 0)
+        .filter(id => !isNaN(id) && id > 0);
 
       if (parsedIngredientesIds.length > 0) {
-        // Se o usuário forneceu uma lista válida de IDs de ingredientes:
-        // 1. TODOS os ingredientes da receita DEVEM estar na lista do filtro.
         andConditions.push({
           ingredientes: {
-            every: {
+            some: {
               ingredienteId: {
                 in: parsedIngredientesIds,
               },
             },
           },
         });
-        // 2. A receita DEVE TER PELO MENOS UM ingrediente.
-        andConditions.push({
-          ingredientes: {
-            some: {}, // Garante que a relação 'ingredientes' não seja vazia.
-          },
-        });
-      } else {
-        // O parâmetro 'ingredientes' foi fornecido, mas resultou em uma lista vazia ou inválida.
-        // Nenhuma receita será retornada devido a este filtro de ingredientes inválido.
-        console.warn(
-          'Filtro de ingredientes fornecido, mas resultou em lista de IDs vazia ou inválida. Nenhuma receita será retornada devido a este filtro.'
-        );
-        andConditions.push({ id: -1 }); // Adiciona uma condição impossível para não retornar receitas
       }
     }
 
     // Montar o 'where' final para o Prisma
-    let finalWhere: any = { ...baseWhere }; // Começa com os filtros base
+    let finalWhere: any = { ...baseWhere };
     if (andConditions.length > 0) {
-      // Se existem condições AND, adiciona-as.
-      // Se baseWhere já tem chaves, todas as andConditions são adicionadas a um array AND.
-      // Se baseWhere estava vazio, andConditions se torna o único conteúdo do AND.
       finalWhere.AND = [...(finalWhere.AND || []), ...andConditions];
     }
-    // Se finalWhere.AND ficou apenas com as andConditions e baseWhere estava vazio,
-    // e finalWhere.AND tem apenas um elemento que é {id: -1}, está ok.
-    // Se baseWhere tem algo e andConditions também, fica como: {titulo: ..., categoriaId: ..., AND: [...]}
 
     // Buscar receitas com os filtros fornecidos
     const receitas = await prisma.receita.findMany({
-      where: finalWhere, // 'where' agora contém toda a lógica de filtro combinada
+      where: finalWhere,
       include: {
         autor: {
           select: {
@@ -383,5 +376,176 @@ export const deleteReceitaController = async (req: Request, res: Response): Prom
   } catch (error) {
     console.error(`Erro ao deletar receita ${receitaId}:`, error);
     res.status(500).json({ message: 'Erro interno ao deletar receita.' });
+  }
+};
+
+export const buscaAvancadaReceitasController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const {
+      q, // General search term
+      titulo, // Specific title search
+      categoriaId: categoriaIdQuery,
+      etiquetaId: etiquetaIdQuery,
+      ingredientes: ingredientesQueryParam,
+      autorId: autorIdQuery,
+      dificuldade: dificuldadeQuery,
+      orderBy: orderByQuery, // 'recent', 'popular', 'title'
+    } = req.query;
+
+    const baseFilters: Prisma.ReceitaWhereInput = {};
+    const complexAndConditions: Prisma.ReceitaWhereInput[] = [];
+
+    // 1. General search term 'q' (searches title and description)
+    if (typeof q === 'string' && q.trim() !== '') {
+      complexAndConditions.push({
+        OR: [
+          { titulo: { contains: q, mode: 'insensitive' } },
+          { descricao: { contains: q, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // 2. Specific title search
+    if (typeof titulo === 'string' && titulo.trim() !== '') {
+      baseFilters.titulo = {
+        contains: titulo,
+        mode: 'insensitive',
+      };
+    }
+
+    // 3. Category ID
+    if (typeof categoriaIdQuery === 'string') {
+      const parsedCategoriaId = parseInt(categoriaIdQuery, 10);
+      if (!isNaN(parsedCategoriaId) && parsedCategoriaId > 0) {
+        baseFilters.categoriaId = parsedCategoriaId;
+      }
+    }
+
+    // 4. Author ID
+    if (typeof autorIdQuery === 'string') {
+      const parsedAutorId = parseInt(autorIdQuery, 10);
+      if (!isNaN(parsedAutorId) && parsedAutorId > 0) {
+        baseFilters.autorId = parsedAutorId;
+      }
+    }
+
+    // 5. Difficulty
+    if (
+      typeof dificuldadeQuery === 'string' &&
+      Object.values(DificuldadeReceita).includes(dificuldadeQuery as DificuldadeReceita)
+    ) {
+      baseFilters.dificuldade = dificuldadeQuery as DificuldadeReceita;
+    }
+
+    // 6. Tag ID (Etiqueta)
+    if (typeof etiquetaIdQuery === 'string') {
+      const parsedEtiquetaId = parseInt(etiquetaIdQuery, 10);
+      if (!isNaN(parsedEtiquetaId) && parsedEtiquetaId > 0) {
+        complexAndConditions.push({
+          etiquetas: {
+            some: {
+              etiquetaId: parsedEtiquetaId,
+            },
+          },
+        });
+      }
+    }
+
+    // 7. Ingredients - Updated logic:
+    // Recipes must only have ingredients that are in the provided list
+    if (typeof ingredientesQueryParam === 'string') {
+      const parsedIngredientesIds = ingredientesQueryParam
+        .split(',')
+        .map(idStr => parseInt(idStr.trim(), 10))
+        .filter(id => !isNaN(id) && id > 0);
+
+      if (parsedIngredientesIds.length > 0) {
+        // "Todos os ingredientes QUE A RECEITA TEM devem estar na lista fornecida"
+        complexAndConditions.push({
+          ingredientes: {
+            every: {
+              ingredienteId: {
+                in: parsedIngredientesIds,
+              },
+            },
+          },
+        });
+      }
+    }
+
+    // Construct the final 'where' clause for Prisma
+    const whereClause: Prisma.ReceitaWhereInput = { ...baseFilters };
+    if (complexAndConditions.length > 0) {
+      whereClause.AND = complexAndConditions;
+    }
+
+    // 8. Order By
+    let orderByClause: Prisma.ReceitaOrderByWithRelationInput = { createdAt: 'desc' }; // Default: recent
+    if (typeof orderByQuery === 'string') {
+      switch (orderByQuery) {
+        case 'popular':
+          orderByClause = { favoritadoPor: { _count: 'desc' } };
+          break;
+        case 'title':
+          orderByClause = { titulo: 'asc' };
+          break;
+        case 'recent':
+        default:
+          orderByClause = { createdAt: 'desc' };
+          break;
+      }
+    }
+
+    const includeClause: Prisma.ReceitaInclude = {
+      autor: {
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          role: true,
+        },
+      },
+      categoria: true,
+      etiquetas: {
+        include: {
+          etiqueta: true,
+        },
+      },
+      ingredientes: {
+        include: {
+          ingrediente: true,
+        },
+      },
+      _count: {
+        select: {
+          comentarios: true,
+          favoritadoPor: true,
+        },
+      },
+    };
+
+    const total = await prisma.receita.count({
+      where: whereClause,
+    });
+
+    const receitas = await prisma.receita.findMany({
+      where: whereClause,
+      include: includeClause,
+      orderBy: orderByClause,
+    });
+
+    res.status(200).json({
+      success: true,
+      total: total,
+      data: receitas,
+    });
+
+  } catch (error: any) {
+    console.error('Erro na busca avançada de receitas:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno ao realizar a busca avançada de receitas.',
+      error: error.message,
+    });
   }
 };

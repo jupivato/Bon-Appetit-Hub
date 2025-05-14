@@ -35,7 +35,23 @@ export const createCategoriaController = async (req: Request, res: Response) => 
 acessível publicamente. */
 export const listarCategoriasController = async (req: Request, res: Response) => {
   try {
+    const { nome } = req.query;
+    
+    const where: any = {};
+    
+    // Filtro opcional pelo nome da categoria
+    if (typeof nome === 'string' && nome.trim() !== '') {
+      where.nome = {
+        contains: nome,
+        mode: 'insensitive' // Case insensitive
+      };
+    }
+    
     const categorias = await prisma.categoria.findMany({
+      where,
+      include: {
+        _count: { select: { receitas: true } }
+      },
       orderBy: {
         nome: 'asc',
       },

@@ -1,21 +1,50 @@
 import { Router } from 'express';
 import {
   getMinhasReceitasFavoritasController,
-  // o togglefavoritocontroller é usado em receita.route.ts para a ação de favoritar/desfavoritar
 } from '../controllers/receitafavorita.controller';
 import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
-/* aplica o middleware de autenticação a todas as rotas neste ficheiro,
-pois apenas utilizadores logados podem ver as suas receitas favoritas. */
+/**
+ * @openapi
+ * tags:
+ *   name: Favoritos
+ *   description: Operações relacionadas às receitas favoritas do usuário
+ */
+
 router.use(authMiddleware);
 
-// get / (o prefixo, ex: /minhas-favoritas, será definido no server.ts)
-// esta rota chama o controller para listar as receitas favoritas do utilizador logado.
-router.get(
-  '/', // este é o caminho relativo ao prefixo que será usado no server.ts
-  getMinhasReceitasFavoritasController
-);
+/**
+ * @openapi
+ * /minhas-favoritas:
+ *   get:
+ *     tags:
+ *       - Favoritos
+ *     summary: Lista as receitas favoritas do usuário
+ *     description: Retorna todas as receitas que o usuário autenticado adicionou aos favoritos
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Lista de receitas favoritas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MinhasFavoritasOutput'
+ *       '401':
+ *         description: Não autorizado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '500':
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.get('/', getMinhasReceitasFavoritasController);
 
 export default router;

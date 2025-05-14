@@ -6,38 +6,219 @@ import {
   getIngredienteByIdController,
   updateIngredienteController,
   deleteIngredienteController,
-} from '../controllers/ingrediente.controller'; // importa os handlers do controller
-import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware'; // importa os middlewares de autenticação e autorização
-import { Role } from '../../generated/prisma/client'; // importa o enum Role para verificação de permissão
+} from '../controllers/ingrediente.controller';
+import { authMiddleware, authorizeRoles } from '../middlewares/auth.middleware';
+import { Role } from '../../generated/prisma/client';
 
-const router = Router(); // cria uma nova instância do roteador do express
+const router = Router();
 
-// --- rotas para ingredientes ---
+/**
+ * @openapi
+ * tags:
+ *   name: Ingredientes
+ *   description: Operações relacionadas a ingredientes de receitas.
+ */
 
-// POST /ingredientes -> criar um novo ingrediente
+/**
+ * @openapi
+ * /ingredientes:
+ *   post:
+ *     tags:
+ *       - Ingredientes
+ *     summary: Cria um novo ingrediente
+ *     description: Adiciona um novo ingrediente ao sistema. Acesso restrito a administradores.
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IngredienteCreateInput'
+ *     responses:
+ *       '201':
+ *         description: Ingrediente criado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/IngredienteOutput'
+ *       '400':
+ *         description: 'Dados de entrada inválidos (ex: nome ausente ou formato de URL inválido).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         description: 'Não autorizado (token JWT ausente ou inválido).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '403':
+ *         description: 'Proibido (usuário não é administrador).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '409':
+ *         description: 'Conflito (ingrediente com este nome já existe).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.post(
-  '/', // o caminho base para esta rota (ex: /api/ingredientes/)
-  authMiddleware, // primeiro, verifica se o token jwt é válido e anexa o usuário à requisição
-  authorizeRoles(Role.ADMINISTRADOR), // depois, verifica se o usuário logado tem a role 'ADMINISTRADOR'
-  createIngredienteController // se ambos os middlewares passarem, chama o controller para criar o ingrediente
+  '/',
+  authMiddleware,
+  authorizeRoles(Role.ADMINISTRADOR),
+  createIngredienteController
 );
 
-// GET /ingredientes -> listar todos os ingredientes (com filtros opcionais via query params)
-// esta rota é pública, não requer autenticação nem roles específicas.
+/**
+ * @openapi
+ * /ingredientes:
+ *   get:
+ *     tags:
+ *       - Ingredientes
+ *     summary: Lista todos os ingredientes
+ *     description: Retorna uma lista de todos os ingredientes, opcionalmente filtrados por nome e/ou categoria.
+ *     parameters:
+ *       - name: nome
+ *         in: query
+ *         required: false
+ *         description: Nome ou parte do nome do ingrediente para filtrar (case-insensitive).
+ *         schema:
+ *           type: string
+ *           example: 'farinha'
+ *       - name: categoria
+ *         in: query
+ *         required: false
+ *         description: Categoria ou parte da categoria do ingrediente para filtrar (case-insensitive).
+ *         schema:
+ *           type: string
+ *           example: 'grãos'
+ *     responses:
+ *       '200':
+ *         description: Lista de ingredientes retornada com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/IngredienteOutput'
+ *       '500':
+ *         description: 'Erro interno do servidor.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *     security: []
+ */
 router.get(
   '/',
   listarIngredientesController
 );
 
-// GET /ingredientes/:id -> buscar um ingrediente específico pelo ID
-// esta rota também é pública.
+/**
+ * @openapi
+ * /ingredientes/{idIngrediente}:
+ *   get:
+ *     tags:
+ *       - Ingredientes
+ *     summary: Busca um ingrediente pelo ID
+ *     description: Retorna os detalhes de um ingrediente específico.
+ *     parameters:
+ *       - name: idIngrediente
+ *         in: path
+ *         required: true
+ *         description: ID do ingrediente a ser buscado.
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           example: 1
+ *     responses:
+ *       '200':
+ *         description: Detalhes do ingrediente retornados com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/IngredienteOutput'
+ *       '404':
+ *         description: 'Ingrediente não encontrado.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *     security: []
+ */
 router.get(
-  '/:id', // o ':id' indica um parâmetro de rota que será o ID do ingrediente
+  '/:id',
   getIngredienteByIdController
 );
 
-// PUT /ingredientes/:id -> atualizar um ingrediente existente
-// requer autenticação e role de administrador.
+/**
+ * @openapi
+ * /ingredientes/{idIngrediente}:
+ *   put:
+ *     tags:
+ *       - Ingredientes
+ *     summary: Atualiza um ingrediente existente
+ *     description: Atualiza os dados de um ingrediente específico. Acesso restrito a administradores.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: idIngrediente
+ *         in: path
+ *         required: true
+ *         description: ID do ingrediente a ser atualizado.
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           example: 1
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/IngredienteUpdateInput'
+ *     responses:
+ *       '200':
+ *         description: Ingrediente atualizado com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/IngredienteOutput'
+ *       '400':
+ *         description: 'Dados de entrada inválidos.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         description: 'Não autorizado.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '403':
+ *         description: 'Proibido.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '404':
+ *         description: 'Ingrediente não encontrado.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '409':
+ *         description: 'Conflito (outro ingrediente já existe com o nome fornecido).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.put(
   '/:id',
   authMiddleware,
@@ -45,8 +226,53 @@ router.put(
   updateIngredienteController
 );
 
-// DELETE /ingredientes/:id -> deletar um ingrediente existente
-// requer autenticação e role de administrador.
+/**
+ * @openapi
+ * /ingredientes/{idIngrediente}:
+ *   delete:
+ *     tags:
+ *       - Ingredientes
+ *     summary: Exclui um ingrediente
+ *     description: Remove um ingrediente do sistema. Acesso restrito a administradores.
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: idIngrediente
+ *         in: path
+ *         required: true
+ *         description: ID do ingrediente a ser excluído.
+ *         schema:
+ *           type: integer
+ *           format: int32
+ *           example: 1
+ *     responses:
+ *       '204':
+ *         description: Ingrediente excluído com sucesso (Sem conteúdo).
+ *       '400':
+ *         description: 'Requisição inválida (ex: ingrediente está sendo usado em receitas).'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         description: 'Não autorizado.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '403':
+ *         description: 'Proibido.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '404':
+ *         description: 'Ingrediente não encontrado.'
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 router.delete(
   '/:id',
   authMiddleware,
@@ -54,4 +280,4 @@ router.delete(
   deleteIngredienteController
 );
 
-export default router; // exporta o roteador para ser usado no arquivo principal do servidor (server.ts)
+export default router;

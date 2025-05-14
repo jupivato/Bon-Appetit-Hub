@@ -43,14 +43,22 @@ export const createIngredienteController = async (req: Request, res: Response): 
 acessível publicamente. */
 export const listarIngredientesController = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { nome } = req.query;
+    const { nome, categoria } = req.query;
     
     const where: any = {};
     
     // Filtro opcional pelo nome do ingrediente
-    if (nome) {
+    if (typeof nome === 'string' && nome.trim() !== '') {
       where.nome = {
-        contains: nome as string,
+        contains: nome,
+        mode: 'insensitive' // Case insensitive
+      };
+    }
+    
+    // Filtro opcional pela categoria do ingrediente
+    if (typeof categoria === 'string' && categoria.trim() !== '') {
+      where.categoriaIngrediente = {
+        contains: categoria,
         mode: 'insensitive' // Case insensitive
       };
     }
