@@ -379,23 +379,24 @@ export const deleteReceitaController = async (req: Request, res: Response): Prom
   }
 };
 
+/* controller para busca avançada de receitas com múltiplos filtros.
+permite combinar diversos critérios e ordenação. */
 export const buscaAvancadaReceitasController = async (req: Request, res: Response): Promise<void> => {
   try {
     const {
-      q, // General search term
-      titulo, // Specific title search
+      q,
+      titulo,
       categoriaId: categoriaIdQuery,
       etiquetaId: etiquetaIdQuery,
       ingredientes: ingredientesQueryParam,
       autorId: autorIdQuery,
       dificuldade: dificuldadeQuery,
-      orderBy: orderByQuery, // 'recent', 'popular', 'title'
+      orderBy: orderByQuery,
     } = req.query;
 
     const baseFilters: Prisma.ReceitaWhereInput = {};
     const complexAndConditions: Prisma.ReceitaWhereInput[] = [];
 
-    // 1. General search term 'q' (searches title and description)
     if (typeof q === 'string' && q.trim() !== '') {
       complexAndConditions.push({
         OR: [
@@ -405,7 +406,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       });
     }
 
-    // 2. Specific title search
     if (typeof titulo === 'string' && titulo.trim() !== '') {
       baseFilters.titulo = {
         contains: titulo,
@@ -413,7 +413,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       };
     }
 
-    // 3. Category ID
     if (typeof categoriaIdQuery === 'string') {
       const parsedCategoriaId = parseInt(categoriaIdQuery, 10);
       if (!isNaN(parsedCategoriaId) && parsedCategoriaId > 0) {
@@ -421,7 +420,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       }
     }
 
-    // 4. Author ID
     if (typeof autorIdQuery === 'string') {
       const parsedAutorId = parseInt(autorIdQuery, 10);
       if (!isNaN(parsedAutorId) && parsedAutorId > 0) {
@@ -429,7 +427,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       }
     }
 
-    // 5. Difficulty
     if (
       typeof dificuldadeQuery === 'string' &&
       Object.values(DificuldadeReceita).includes(dificuldadeQuery as DificuldadeReceita)
@@ -437,7 +434,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       baseFilters.dificuldade = dificuldadeQuery as DificuldadeReceita;
     }
 
-    // 6. Tag ID (Etiqueta)
     if (typeof etiquetaIdQuery === 'string') {
       const parsedEtiquetaId = parseInt(etiquetaIdQuery, 10);
       if (!isNaN(parsedEtiquetaId) && parsedEtiquetaId > 0) {
@@ -451,8 +447,6 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       }
     }
 
-    // 7. Ingredients - Updated logic:
-    // Recipes must only have ingredients that are in the provided list
     if (typeof ingredientesQueryParam === 'string') {
       const parsedIngredientesIds = ingredientesQueryParam
         .split(',')
@@ -460,7 +454,7 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
         .filter(id => !isNaN(id) && id > 0);
 
       if (parsedIngredientesIds.length > 0) {
-        // "Todos os ingredientes QUE A RECEITA TEM devem estar na lista fornecida"
+        // "todos os ingredientes que a receita tem devem estar na lista fornecida"
         complexAndConditions.push({
           ingredientes: {
             every: {
@@ -473,14 +467,12 @@ export const buscaAvancadaReceitasController = async (req: Request, res: Respons
       }
     }
 
-    // Construct the final 'where' clause for Prisma
     const whereClause: Prisma.ReceitaWhereInput = { ...baseFilters };
     if (complexAndConditions.length > 0) {
       whereClause.AND = complexAndConditions;
     }
 
-    // 8. Order By
-    let orderByClause: Prisma.ReceitaOrderByWithRelationInput = { createdAt: 'desc' }; // Default: recent
+    let orderByClause: Prisma.ReceitaOrderByWithRelationInput = { createdAt: 'desc' };
     if (typeof orderByQuery === 'string') {
       switch (orderByQuery) {
         case 'popular':
