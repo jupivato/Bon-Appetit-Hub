@@ -72,9 +72,9 @@ router.get(
  *         required: true
  *         description: ID do usuário a ser buscado.
  *         schema:
- *           type: string
- *           format: uuid # Ou o formato do seu ID
- *           example: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+ *           type: integer
+ *           format: int32
+ *           example: 1
  *     responses:
  *       '200':
  *         description: Detalhes do usuário retornados com sucesso.
@@ -123,9 +123,9 @@ router.get(
  *         required: true
  *         description: ID do usuário a ser atualizado.
  *         schema:
- *           type: string
- *           format: uuid # Ou o formato do seu ID
- *           example: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+ *           type: integer
+ *           format: int32
+ *           example: 1
  *     requestBody:
  *       required: true
  *       content:
@@ -186,9 +186,9 @@ router.put(
  *         required: true
  *         description: ID do usuário a ser deletado.
  *         schema:
- *           type: string
- *           format: uuid # Ou o formato do seu ID
- *           example: 'a1b2c3d4-e89b-12d3-a456-426614174000'
+ *           type: integer
+ *           format: int32
+ *           example: 1
  *     responses:
  *       '204':
  *         description: Usuário deletado com sucesso (Sem conteúdo).
